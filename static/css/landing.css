@@ -1,0 +1,166 @@
+/* ------------------------------------------------------------------ */
+/* Hero — landing page only                                            */
+/* ------------------------------------------------------------------ */
+
+/* Override base hero to a centered single-column layout */
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5rem 2rem 4rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    gap: 3rem;
+}
+
+.lhero-inner {
+    text-align: center;
+    max-width: 640px;
+}
+
+.lhero-badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+}
+
+.lhero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+}
+
+.lhero-title-accent {
+    color: var(--accent);
+}
+
+.lhero-subtitle {
+    font-size: 1rem;
+    color: var(--ink-muted);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+
+.lhero-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.lhero-actions .btn-ghost {
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mock dashboard                                                      */
+/* ------------------------------------------------------------------ */
+
+.lhero-visual {
+    width: 100%;
+    max-width: 680px;
+}
+
+.lmock-dashboard {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Stat cards row */
+.lmock-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.lmock-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.lmock-stat-label {
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.lmock-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.lmock-stat-change {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.lmock-positive { color: var(--accent); }
+.lmock-neutral  { color: var(--ink-faint); }
+
+/* Bar chart */
+.lmock-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.lmock-bar-row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lmock-cat {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+
+.lmock-bar-track {
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.lmock-bar {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.lmock-bar-1 { background: var(--accent); }
+.lmock-bar-2 { background: var(--accent-2); }
+.lmock-bar-3 { background: #5b7fa6; }
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+    .lmock-stats { grid-template-columns: 1fr 1fr; }
+    .lmock-stats .lmock-stat:last-child { grid-column: span 2; }
+    .hiw-modal { padding: 1.75rem; }
+}
