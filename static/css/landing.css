@@ -58,10 +58,6 @@
     justify-content: center;
 }
 
-.lhero-actions .btn-ghost {
-    font-family: var(--font-body);
-    cursor: pointer;
-}
 
 /* ------------------------------------------------------------------ */
 /* Mock dashboard                                                      */
@@ -154,6 +150,65 @@
 .lmock-bar-1 { background: var(--accent); }
 .lmock-bar-2 { background: var(--accent-2); }
 .lmock-bar-3 { background: #5b7fa6; }
+
+/* ------------------------------------------------------------------ */
+/* Video modal                                                         */
+/* ------------------------------------------------------------------ */
+
+.hiw-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.hiw-overlay.is-open {
+    display: flex;
+}
+
+.hiw-modal {
+    background: var(--ink);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hiw-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    z-index: 1;
+}
+
+.hiw-close:hover { color: #fff; }
+
+/* 16:9 responsive iframe container */
+.hiw-video-wrap {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+}
+
+.hiw-video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
 
 /* ------------------------------------------------------------------ */
 /* Responsive                                                          */
