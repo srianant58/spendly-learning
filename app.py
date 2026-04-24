@@ -59,7 +59,7 @@ def login():
 
     session["user_id"]   = user["id"]
     session["user_name"] = user["name"]
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 # ------------------------------------------------------------------ #
@@ -84,7 +84,39 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user = {
+        "initials": "JD",
+        "name": "Jamie Doe",
+        "email": "jamie@example.com",
+        "member_since": "January 2026",
+    }
+    stats = {
+        "total_spent": 306.25,
+        "transaction_count": 8,
+        "top_category": "Food",
+    }
+    transactions = [
+        {"date": "Apr 20, 2026", "description": "Groceries",     "category": "Food",          "amount": 22.00},
+        {"date": "Apr 17, 2026", "description": "Miscellaneous", "category": "Other",         "amount":  8.75},
+        {"date": "Apr 14, 2026", "description": "Clothing",      "category": "Shopping",      "amount": 65.00},
+        {"date": "Apr 11, 2026", "description": "Movie tickets", "category": "Entertainment", "amount": 20.00},
+        {"date": "Apr 08, 2026", "description": "Pharmacy",      "category": "Health",        "amount": 45.00},
+    ]
+    categories = [
+        {"name": "Bills",         "amount": 120.00, "pct": 39},
+        {"name": "Shopping",      "amount":  65.00, "pct": 21},
+        {"name": "Health",        "amount":  45.00, "pct": 15},
+        {"name": "Transport",     "amount":  35.00, "pct": 11},
+        {"name": "Food",          "amount":  34.50, "pct": 11},
+        {"name": "Entertainment", "amount":  20.00, "pct":  7},
+        {"name": "Other",         "amount":   8.75, "pct":  3},
+    ]
+    return render_template("profile.html",
+        user=user, stats=stats,
+        transactions=transactions, categories=categories)
 
 
 @app.route("/expenses/add")
