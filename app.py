@@ -1,7 +1,7 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.security import generate_password_hash
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
 
 app = Flask(__name__)
@@ -44,10 +44,22 @@ def register():
     return render_template("register.html", error=error, name=name, email=email)
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    registered = request.args.get("registered")
-    return render_template("login.html", registered=registered)
+    if request.method == "GET":
+        registered = request.args.get("registered")
+        return render_template("login.html", registered=registered)
+
+    email    = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    user = get_user_by_email(email)
+    if not user or not check_password_hash(user["password_hash"], password):
+        return render_template("login.html", error="Invalid email or password.", email=email)
+
+    session["user_id"]   = user["id"]
+    session["user_name"] = user["name"]
+    return redirect(url_for("landing"))
 
 
 # ------------------------------------------------------------------ #
@@ -66,7 +78,8 @@ def privacy():
 
 @app.route("/logout")
 def logout():
-    return "Logout — coming in Step 3"
+    session.clear()
+    return redirect(url_for("landing"))
 
 
 @app.route("/profile")
