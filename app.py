@@ -57,6 +57,45 @@ def _format_member_since(created_at_str):
 
 
 # ------------------------------------------------------------------ #
+# Validation helpers                                                  #
+# ------------------------------------------------------------------ #
+
+def _parse_date_filter(start_date_raw, end_date_raw):
+    """Validate a start/end date query-string pair.
+
+    Returns an error message if the pair is invalid or incomplete
+    (meaning "fall back to all-time"), or None if the pair is fine as
+    given — either both empty (no filter) or both well-formed
+    "YYYY-MM-DD" strings with start_date_raw <= end_date_raw.
+    """
+    if not start_date_raw and not end_date_raw:
+        return None
+
+    if not start_date_raw or not end_date_raw:
+        return (
+            "Enter both a start and end date to filter — "
+            "showing all-time data instead."
+        )
+
+    try:
+        start = datetime.strptime(start_date_raw, "%Y-%m-%d")
+        end = datetime.strptime(end_date_raw, "%Y-%m-%d")
+    except ValueError:
+        return (
+            "Enter valid dates in YYYY-MM-DD format — "
+            "showing all-time data instead."
+        )
+
+    if start > end:
+        return (
+            "Start date must be on or before end date — "
+            "showing all-time data instead."
+        )
+
+    return None
+
+
+# ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
 
@@ -146,9 +185,15 @@ def profile():
         session.pop("user_name", None)
         return redirect(url_for("login"))
 
-    summary = get_expense_summary(user_id)
-    expense_rows = get_expenses_for_user(user_id)
-    category_rows = get_category_totals(user_id)
+    start_date_raw = request.args.get("start_date", "").strip()
+    end_date_raw = request.args.get("end_date", "").strip()
+    filter_error = _parse_date_filter(start_date_raw, end_date_raw)
+    start_date = start_date_raw if start_date_raw and not filter_error else None
+    end_date = end_date_raw if end_date_raw and not filter_error else None
+
+    summary = get_expense_summary(user_id, start_date, end_date)
+    expense_rows = get_expenses_for_user(user_id, start_date, end_date)
+    category_rows = get_category_totals(user_id, start_date, end_date)
 
     user = {
         "name": user_row["name"],
@@ -188,6 +233,9 @@ def profile():
         stats=stats,
         transactions=transactions,
         categories=categories,
+        filter_start=start_date_raw,
+        filter_end=end_date_raw,
+        filter_error=filter_error,
     )
 
 
