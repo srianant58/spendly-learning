@@ -1,5 +1,6 @@
 ---
 description: Insert randomized expense rows for a given user into the local expense_tracker.db, spread across N months
+argument-hint: "user_id num_entries num_months e.g 3 20 6"
 ---
 
 The user wants to add test expense rows to the local SQLite database, via the same access

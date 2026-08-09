@@ -99,6 +99,104 @@ def get_user_by_email(email):
         conn.close()
 
 
+def get_user_by_id(user_id):
+    """Return the matching users row (sqlite3.Row) or None."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, name, email, created_at FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def get_expenses_for_user(user_id):
+    """Return all of a user's expense rows, newest date first."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            """
+            SELECT id, amount, category, date, description
+            FROM expenses
+            WHERE user_id = ?
+            ORDER BY date DESC, id DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_expense_summary(user_id):
+    """Return a user's total spent, transaction count, and top category.
+
+    Returns {"total": float, "count": int, "top_category": str | None}.
+    top_category is None when the user has no expenses.
+    """
+    conn = get_db()
+    try:
+        totals = conn.execute(
+            """
+            SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count
+            FROM expenses WHERE user_id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+        top = conn.execute(
+            """
+            SELECT category, SUM(amount) AS category_total
+            FROM expenses
+            WHERE user_id = ?
+            GROUP BY category
+            ORDER BY category_total DESC
+            LIMIT 1
+            """,
+            (user_id,),
+        ).fetchone()
+        return {
+            "total": totals["total"],
+            "count": totals["count"],
+            "top_category": top["category"] if top else None,
+        }
+    finally:
+        conn.close()
+
+
+def get_category_totals(user_id):
+    """Return per-category totals and percent-of-total, largest first.
+
+    Returns a list of {"category": str, "total": float, "percent": int}.
+    Empty list when the user has no expenses.
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT category, SUM(amount) AS total
+            FROM expenses
+            WHERE user_id = ?
+            GROUP BY category
+            ORDER BY total DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    grand_total = sum(row["total"] for row in rows)
+    if not grand_total:
+        return []
+
+    return [
+        {
+            "category": row["category"],
+            "total": row["total"],
+            "percent": round(row["total"] / grand_total * 100),
+        }
+        for row in rows
+    ]
+
+
 def seed_db():
     """Insert one demo user and 8 sample expenses, once only.
 
