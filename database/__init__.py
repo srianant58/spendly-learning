@@ -1,3 +1,23 @@
-from database.db import create_user, get_db, get_user_by_email, init_db, seed_db
+from database.db import (
+    create_user,
+    get_category_totals,
+    get_db,
+    get_expense_summary,
+    get_expenses_for_user,
+    get_user_by_email,
+    get_user_by_id,
+    init_db,
+    seed_db,
+)
 
-__all__ = ["create_user", "get_db", "get_user_by_email", "init_db", "seed_db"]
+__all__ = [
+    "create_user",
+    "get_category_totals",
+    "get_db",
+    "get_expense_summary",
+    "get_expenses_for_user",
+    "get_user_by_email",
+    "get_user_by_id",
+    "init_db",
+    "seed_db",
+]

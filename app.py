@@ -1,10 +1,21 @@
 import os
 import sqlite3
+from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
-from database import create_user, get_db, get_user_by_email, init_db, seed_db
+from database import (
+    create_user,
+    get_category_totals,
+    get_db,
+    get_expense_summary,
+    get_expenses_for_user,
+    get_user_by_email,
+    get_user_by_id,
+    init_db,
+    seed_db,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-secret-key-change-me")
@@ -12,6 +23,37 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-secret-key-chan
 with app.app_context():
     init_db()
     seed_db()
+
+
+# ------------------------------------------------------------------ #
+# Formatting helpers                                                  #
+# ------------------------------------------------------------------ #
+
+def _format_currency(amount):
+    """Format a numeric amount as an INR display string, e.g. "₹6,541.50"."""
+    return f"₹{amount:,.2f}"
+
+
+def _format_short_date(date_str):
+    """Format a "YYYY-MM-DD" date string as a short display date, e.g. "23 Aug"."""
+    parsed = datetime.strptime(date_str, "%Y-%m-%d")
+    return f"{parsed.day} {parsed.strftime('%b')}"
+
+
+def _derive_initials(name):
+    """Derive display initials (e.g. "DU") from a user's full name."""
+    words = name.split()
+    if len(words) >= 2:
+        return (words[0][0] + words[-1][0]).upper()
+    if words:
+        return words[0][:2].upper()
+    return "?"
+
+
+def _format_member_since(created_at_str):
+    """Format a "YYYY-MM-DD HH:MM:SS" timestamp as a month/year label, e.g. "August 2025"."""
+    parsed = datetime.strptime(created_at_str, "%Y-%m-%d %H:%M:%S")
+    return parsed.strftime("%B %Y")
 
 
 # ------------------------------------------------------------------ #
@@ -92,44 +134,52 @@ def logout():
     return redirect(url_for("landing"))
 
 
-# ------------------------------------------------------------------ #
-# Placeholder routes — students will implement these                  #
-# ------------------------------------------------------------------ #
-
 @app.route("/profile")
 def profile():
-    if not session.get("user_id"):
+    user_id = session.get("user_id")
+    if not user_id:
         return redirect(url_for("login"))
 
+    user_row = get_user_by_id(user_id)
+    if user_row is None:
+        session.pop("user_id", None)
+        session.pop("user_name", None)
+        return redirect(url_for("login"))
+
+    summary = get_expense_summary(user_id)
+    expense_rows = get_expenses_for_user(user_id)
+    category_rows = get_category_totals(user_id)
+
     user = {
-        "name": "Demo User",
-        "email": "demo@spendly.com",
-        "initials": "DU",
-        "member_since": "August 2025",
+        "name": user_row["name"],
+        "email": user_row["email"],
+        "initials": _derive_initials(user_row["name"]),
+        "member_since": _format_member_since(user_row["created_at"]),
     }
 
     stats = [
-        {"label": "Total spent", "value": "₹6,541.50"},
-        {"label": "Transactions", "value": "8"},
-        {"label": "Top category", "value": "Food"},
+        {"label": "Total spent", "value": _format_currency(summary["total"])},
+        {"label": "Transactions", "value": str(summary["count"])},
+        {"label": "Top category", "value": summary["top_category"] or "No expenses yet"},
     ]
 
     transactions = [
-        {"date": "23 Aug", "description": "Restaurant dinner", "category": "Food", "amount": "₹980.25"},
-        {"date": "19 Aug", "description": "Miscellaneous", "category": "Other", "amount": "₹300.00"},
-        {"date": "15 Aug", "description": "Clothing", "category": "Shopping", "amount": "₹1,750.00"},
-        {"date": "11 Aug", "description": "Movie tickets", "category": "Entertainment", "amount": "₹600.00"},
-        {"date": "8 Aug", "description": "Pharmacy", "category": "Health", "amount": "₹540.75"},
-        {"date": "5 Aug", "description": "Electricity bill", "category": "Bills", "amount": "₹2,200.00"},
+        {
+            "date": _format_short_date(row["date"]),
+            "description": row["description"] or "",
+            "category": row["category"],
+            "amount": _format_currency(row["amount"]),
+        }
+        for row in expense_rows
     ]
 
     categories = [
-        {"name": "Bills", "amount": "₹2,200.00", "percent": 34},
-        {"name": "Shopping", "amount": "₹1,750.00", "percent": 27},
-        {"name": "Food", "amount": "₹980.25", "percent": 15},
-        {"name": "Entertainment", "amount": "₹600.00", "percent": 9},
-        {"name": "Health", "amount": "₹540.75", "percent": 8},
-        {"name": "Other", "amount": "₹300.00", "percent": 5},
+        {
+            "name": row["category"],
+            "amount": _format_currency(row["total"]),
+            "percent": row["percent"],
+        }
+        for row in category_rows
     ]
 
     return render_template(
@@ -140,6 +190,10 @@ def profile():
         categories=categories,
     )
 
+
+# ------------------------------------------------------------------ #
+# Placeholder routes — students will implement these                  #
+# ------------------------------------------------------------------ #
 
 @app.route("/expenses/add")
 def add_expense():
