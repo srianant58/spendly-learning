@@ -25,6 +25,28 @@
             {% endfor %}
         </div>
 
+        <div class="profile-filter">
+            {% if filter_error %}
+            <div class="form-error">{{ filter_error }}</div>
+            {% endif %}
+            <form method="GET" action="{{ url_for('profile') }}" class="profile-filter-form">
+                <div class="form-group">
+                    <label for="start_date">From</label>
+                    <input type="date" id="start_date" name="start_date"
+                           class="form-input" value="{{ filter_start }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">To</label>
+                    <input type="date" id="end_date" name="end_date"
+                           class="form-input" value="{{ filter_end }}">
+                </div>
+                <button type="submit" class="btn-submit profile-filter-submit">Apply</button>
+                {% if filter_start or filter_end %}
+                <a href="{{ url_for('profile') }}" class="btn-ghost profile-filter-clear">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
         <div class="profile-table">
             <h2 class="profile-section-title">Recent transactions</h2>
             <div class="profile-table-scroll">

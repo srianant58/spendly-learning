@@ -110,48 +110,60 @@ def get_user_by_id(user_id):
         conn.close()
 
 
-def get_expenses_for_user(user_id):
-    """Return all of a user's expense rows, newest date first."""
+def _date_range_clause(start_date, end_date):
+    """Return (sql_fragment, extra_params) for an optional inclusive date range.
+
+    Only applies the range when both start_date and end_date are given
+    ("YYYY-MM-DD" strings); otherwise returns an empty fragment and no
+    extra params, meaning "all-time".
+    """
+    if start_date and end_date:
+        return " AND date BETWEEN ? AND ?", [start_date, end_date]
+    return "", []
+
+
+def get_expenses_for_user(user_id, start_date=None, end_date=None):
+    """Return a user's expense rows, newest date first.
+
+    When start_date and end_date are both given ("YYYY-MM-DD" strings),
+    restricts to that inclusive date range.
+    """
     conn = get_db()
     try:
-        return conn.execute(
-            """
-            SELECT id, amount, category, date, description
-            FROM expenses
-            WHERE user_id = ?
-            ORDER BY date DESC, id DESC
-            """,
-            (user_id,),
-        ).fetchall()
+        clause, extra_params = _date_range_clause(start_date, end_date)
+        query = (
+            "SELECT id, amount, category, date, description FROM expenses "
+            "WHERE user_id = ?" + clause + " ORDER BY date DESC, id DESC"
+        )
+        return conn.execute(query, [user_id] + extra_params).fetchall()
     finally:
         conn.close()
 
 
-def get_expense_summary(user_id):
+def get_expense_summary(user_id, start_date=None, end_date=None):
     """Return a user's total spent, transaction count, and top category.
+
+    When start_date and end_date are both given ("YYYY-MM-DD" strings),
+    restricts to that inclusive date range.
 
     Returns {"total": float, "count": int, "top_category": str | None}.
     top_category is None when the user has no expenses.
     """
     conn = get_db()
     try:
+        clause, extra_params = _date_range_clause(start_date, end_date)
+        params = [user_id] + extra_params
+
         totals = conn.execute(
-            """
-            SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count
-            FROM expenses WHERE user_id = ?
-            """,
-            (user_id,),
+            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count "
+            "FROM expenses WHERE user_id = ?" + clause,
+            params,
         ).fetchone()
         top = conn.execute(
-            """
-            SELECT category, SUM(amount) AS category_total
-            FROM expenses
-            WHERE user_id = ?
-            GROUP BY category
-            ORDER BY category_total DESC
-            LIMIT 1
-            """,
-            (user_id,),
+            "SELECT category, SUM(amount) AS category_total "
+            "FROM expenses WHERE user_id = ?" + clause +
+            " GROUP BY category ORDER BY category_total DESC LIMIT 1",
+            params,
         ).fetchone()
         return {
             "total": totals["total"],
@@ -162,24 +174,23 @@ def get_expense_summary(user_id):
         conn.close()
 
 
-def get_category_totals(user_id):
+def get_category_totals(user_id, start_date=None, end_date=None):
     """Return per-category totals and percent-of-total, largest first.
+
+    When start_date and end_date are both given ("YYYY-MM-DD" strings),
+    restricts to that inclusive date range.
 
     Returns a list of {"category": str, "total": float, "percent": int}.
     Empty list when the user has no expenses.
     """
     conn = get_db()
     try:
-        rows = conn.execute(
-            """
-            SELECT category, SUM(amount) AS total
-            FROM expenses
-            WHERE user_id = ?
-            GROUP BY category
-            ORDER BY total DESC
-            """,
-            (user_id,),
-        ).fetchall()
+        clause, extra_params = _date_range_clause(start_date, end_date)
+        query = (
+            "SELECT category, SUM(amount) AS total FROM expenses WHERE user_id = ?"
+            + clause + " GROUP BY category ORDER BY total DESC"
+        )
+        rows = conn.execute(query, [user_id] + extra_params).fetchall()
     finally:
         conn.close()
 
