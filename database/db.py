@@ -90,6 +90,21 @@ def create_user(name, email, password):
         conn.close()
 
 
+def create_expense(user_id, amount, category, expense_date, description):
+    """Insert a new expense. Returns the new expense's id."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (user_id, amount, category, expense_date, description),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
 def get_user_by_email(email):
     """Return the matching users row (sqlite3.Row) or None."""
     conn = get_db()
