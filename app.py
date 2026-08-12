@@ -1,11 +1,14 @@
+import math
 import os
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
 from database import (
+    CATEGORIES,
+    create_expense,
     create_user,
     get_category_totals,
     get_db,
@@ -239,14 +242,57 @@ def profile():
     )
 
 
+@app.route("/expenses/add", methods=["GET", "POST"])
+def add_expense():
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    today = date.today().isoformat()
+
+    if request.method == "GET":
+        return render_template("add_expense.html", categories=CATEGORIES, today=today)
+
+    amount_raw = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date_raw = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    form_context = {
+        "categories": CATEGORIES,
+        "today": today,
+        "amount": amount_raw,
+        "category": category,
+        "date": date_raw,
+        "description": description,
+    }
+
+    def _render_form_error(message):
+        return render_template("add_expense.html", error=message, **form_context), 400
+
+    try:
+        amount = float(amount_raw)
+    except ValueError:
+        amount = None
+    if amount is None or amount <= 0 or not math.isfinite(amount):
+        return _render_form_error("Enter a valid amount greater than 0.")
+
+    if category not in CATEGORIES:
+        return _render_form_error("Select a valid category.")
+
+    try:
+        expense_date = datetime.strptime(date_raw, "%Y-%m-%d")
+    except ValueError:
+        return _render_form_error("Enter a valid date in YYYY-MM-DD format.")
+    if expense_date.date() > date.today():
+        return _render_form_error("Date cannot be in the future.")
+
+    create_expense(session["user_id"], amount, category, date_raw, description or None)
+    return redirect(url_for("profile"))
+
+
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
-
-@app.route("/expenses/add")
-def add_expense():
-    return "Add expense — coming in Step 7"
-
 
 @app.route("/expenses/<int:id>/edit")
 def edit_expense(id):

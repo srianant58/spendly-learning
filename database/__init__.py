@@ -1,4 +1,6 @@
 from database.db import (
+    CATEGORIES,
+    create_expense,
     create_user,
     get_category_totals,
     get_db,
@@ -11,6 +13,8 @@ from database.db import (
 )
 
 __all__ = [
+    "CATEGORIES",
+    "create_expense",
     "create_user",
     "get_category_totals",
     "get_db",
