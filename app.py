@@ -11,6 +11,7 @@ from database import (
     CATEGORIES,
     create_expense,
     create_user,
+    delete_expense as delete_expense_row,
     get_category_totals,
     get_db,
     get_expense_by_id,
@@ -406,9 +407,15 @@ def edit_expense(id):
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    if not delete_expense_row(id, session["user_id"]):
+        abort(404)
+
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
