@@ -142,6 +142,24 @@ def update_expense(expense_id, user_id, amount, category, expense_date, descript
         conn.close()
 
 
+def delete_expense(expense_id, user_id):
+    """Delete an expense scoped to user_id.
+
+    Returns True if a row was deleted, False if expense_id doesn't
+    exist or doesn't belong to user_id.
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
 def get_user_by_email(email):
     """Return the matching users row (sqlite3.Row) or None."""
     conn = get_db()

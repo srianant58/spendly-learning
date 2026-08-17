@@ -33,3 +33,14 @@
         if (e.key === 'Escape' && !overlay.hidden) closeModal();
     });
 })();
+
+// Delete-expense confirmation
+(function () {
+    document.querySelectorAll('.profile-delete-form').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (!confirm("Delete this expense? This can't be undone.")) {
+                e.preventDefault();
+            }
+        });
+    });
+})();
