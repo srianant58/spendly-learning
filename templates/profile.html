@@ -33,22 +33,37 @@
             {% if filter_error %}
             <div class="form-error">{{ filter_error }}</div>
             {% endif %}
-            <form method="GET" action="{{ url_for('profile') }}" class="profile-filter-form">
-                <div class="form-group">
-                    <label for="start_date">From</label>
-                    <input type="date" id="start_date" name="start_date"
-                           class="form-input" value="{{ filter_start }}">
-                </div>
-                <div class="form-group">
-                    <label for="end_date">To</label>
-                    <input type="date" id="end_date" name="end_date"
-                           class="form-input" value="{{ filter_end }}">
-                </div>
-                <button type="submit" class="btn-submit profile-filter-submit">Apply</button>
-                {% if filter_start or filter_end %}
-                <a href="{{ url_for('profile') }}" class="btn-ghost profile-filter-clear">Clear</a>
-                {% endif %}
-            </form>
+
+            <div class="profile-filter-quick">
+                {% for qr in quick_ranges %}
+                <a href="{{ url_for('profile', start_date=qr.start, end_date=qr.end) }}"
+                   class="profile-filter-quick-link{% if filter_start == qr.start and filter_end == qr.end %} is-active{% endif %}">{{ qr.label }}</a>
+                {% endfor %}
+            </div>
+
+            <details class="profile-filter-custom"{% if show_custom_open %} open{% endif %}>
+                <summary>Custom date range</summary>
+                <form method="GET" action="{{ url_for('profile') }}" class="profile-filter-form">
+                    <div class="form-group">
+                        <label for="start_date">From</label>
+                        <input type="date" id="start_date" name="start_date"
+                               class="form-input" value="{{ custom_start }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date">To</label>
+                        <input type="date" id="end_date" name="end_date"
+                               class="form-input" value="{{ custom_end }}">
+                    </div>
+                    <button type="submit" class="btn-submit profile-filter-submit">Apply</button>
+                    {% if filter_start or filter_end %}
+                    <a href="{{ url_for('profile') }}" class="btn-ghost profile-filter-clear">Clear</a>
+                    {% endif %}
+                </form>
+            </details>
+
+            <div class="profile-filter-summary">
+                Showing: <strong>{{ filter_summary }}</strong>
+            </div>
         </div>
 
         <div class="profile-table">
@@ -61,6 +76,7 @@
                             <th>Description</th>
                             <th>Category</th>
                             <th class="profile-amount-col">Amount</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,6 +88,7 @@
                                 <span class="category-badge category-badge--{{ tx.category|lower }}">{{ tx.category }}</span>
                             </td>
                             <td class="profile-amount-col">{{ tx.amount }}</td>
+                            <td><a href="{{ url_for('edit_expense', id=tx.id) }}" class="profile-action-link">Edit</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>

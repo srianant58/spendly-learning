@@ -1,9 +1,10 @@
+import calendar
 import math
 import os
 import sqlite3
 from datetime import date, datetime
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, abort, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
 from database import (
@@ -12,12 +13,14 @@ from database import (
     create_user,
     get_category_totals,
     get_db,
+    get_expense_by_id,
     get_expense_summary,
     get_expenses_for_user,
     get_user_by_email,
     get_user_by_id,
     init_db,
     seed_db,
+    update_expense,
 )
 
 app = Flask(__name__)
@@ -43,6 +46,12 @@ def _format_short_date(date_str):
     return f"{parsed.day} {parsed.strftime('%b')}"
 
 
+def _format_long_date(date_str):
+    """Format a "YYYY-MM-DD" date string as a full display date, e.g. "23 Aug 2026"."""
+    parsed = datetime.strptime(date_str, "%Y-%m-%d")
+    return f"{parsed.day} {parsed.strftime('%b %Y')}"
+
+
 def _derive_initials(name):
     """Derive display initials (e.g. "DU") from a user's full name."""
     words = name.split()
@@ -51,6 +60,19 @@ def _derive_initials(name):
     if words:
         return words[0][:2].upper()
     return "?"
+
+
+def _months_ago(base_date, months):
+    """Return base_date shifted back by a whole number of calendar months.
+
+    Clamps the day-of-month to the target month's last day (e.g. 31 Mar
+    minus 1 month lands on 28/29 Feb, not an invalid date).
+    """
+    month_index = base_date.month - 1 - months
+    year = base_date.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(base_date.day, calendar.monthrange(year, month)[1])
+    return base_date.replace(year=year, month=month, day=day)
 
 
 def _format_member_since(created_at_str):
@@ -213,6 +235,7 @@ def profile():
 
     transactions = [
         {
+            "id": row["id"],
             "date": _format_short_date(row["date"]),
             "description": row["description"] or "",
             "category": row["category"],
@@ -230,6 +253,28 @@ def profile():
         for row in category_rows
     ]
 
+    today = date.today()
+    quick_ranges = [
+        {"label": "Last 1 month", "start": _months_ago(today, 1).isoformat(), "end": today.isoformat()},
+        {"label": "Last 3 months", "start": _months_ago(today, 3).isoformat(), "end": today.isoformat()},
+    ]
+    matched_quick = next(
+        (qr for qr in quick_ranges if qr["start"] == start_date_raw and qr["end"] == end_date_raw),
+        None,
+    )
+
+    # Quick-range links don't need to echo their dates back into the custom
+    # date boxes — only a manually-entered (or invalid) range does.
+    custom_start = "" if matched_quick else start_date_raw
+    custom_end = "" if matched_quick else end_date_raw
+    show_custom_open = bool(filter_error) or bool((start_date_raw or end_date_raw) and not matched_quick)
+
+    if start_date and end_date:
+        range_label = matched_quick["label"] if matched_quick else "Custom range"
+        filter_summary = f"{range_label} — {_format_long_date(start_date)} to {_format_long_date(end_date)}"
+    else:
+        filter_summary = "All time"
+
     return render_template(
         "profile.html",
         user=user,
@@ -239,6 +284,11 @@ def profile():
         filter_start=start_date_raw,
         filter_end=end_date_raw,
         filter_error=filter_error,
+        quick_ranges=quick_ranges,
+        custom_start=custom_start,
+        custom_end=custom_end,
+        show_custom_open=show_custom_open,
+        filter_summary=filter_summary,
     )
 
 
@@ -294,9 +344,66 @@ def add_expense():
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    expense = get_expense_by_id(id, session["user_id"])
+    if expense is None:
+        abort(404)
+
+    today = date.today().isoformat()
+
+    if request.method == "GET":
+        return render_template(
+            "edit_expense.html",
+            categories=CATEGORIES,
+            today=today,
+            expense=expense,
+            amount=expense["amount"],
+            category=expense["category"],
+            date=expense["date"],
+            description=expense["description"],
+        )
+
+    amount_raw = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date_raw = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    form_context = {
+        "categories": CATEGORIES,
+        "today": today,
+        "expense": expense,
+        "amount": amount_raw,
+        "category": category,
+        "date": date_raw,
+        "description": description,
+    }
+
+    def _render_form_error(message):
+        return render_template("edit_expense.html", error=message, **form_context), 400
+
+    try:
+        amount = float(amount_raw)
+    except ValueError:
+        amount = None
+    if amount is None or amount <= 0 or not math.isfinite(amount):
+        return _render_form_error("Enter a valid amount greater than 0.")
+
+    if category not in CATEGORIES:
+        return _render_form_error("Select a valid category.")
+
+    try:
+        expense_date = datetime.strptime(date_raw, "%Y-%m-%d")
+    except ValueError:
+        return _render_form_error("Enter a valid date in YYYY-MM-DD format.")
+    if expense_date.date() > date.today():
+        return _render_form_error("Date cannot be in the future.")
+
+    update_expense(id, session["user_id"], amount, category, date_raw, description or None)
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")
