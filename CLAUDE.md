@@ -36,3 +36,4 @@ pytest
 - **Templates** (`templates/`) use Jinja2 inheritance from `base.html`, which defines `title`, `head`, `content`, and `scripts` blocks, plus a shared navbar/footer. Auth pages (`login.html`, `register.html`) already have working forms posting to `/login` and `/register` (`name`/`email`/`password` fields) — the backend just needs to handle them.
 - **Static assets** (`static/css/style.css`, `static/js/main.js`) are plain CSS/JS, no build step or bundler. `main.js` currently only wires up the landing page's "how it works" video modal.
 - No ORM — expect raw SQL via `sqlite3` per the `get_db()`/`init_db()` contract described above.
+- while performing testing, do not delete any entries in the database. You can only delete the new entries that were added for testing purposes.

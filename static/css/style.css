@@ -572,6 +572,21 @@ a { color: inherit; text-decoration: none; }
 
 .btn-submit:hover { background: var(--accent); }
 
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-actions .btn-submit {
+    flex: 1;
+    margin-top: 0;
+}
+
+.form-actions .btn-ghost {
+    text-align: center;
+}
+
 .auth-switch {
     text-align: center;
     font-size: 0.875rem;
@@ -696,6 +711,81 @@ a { color: inherit; text-decoration: none; }
     margin-top: 0;
 }
 
+.profile-filter-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.profile-filter-quick-link {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.profile-filter-quick-link:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.profile-filter-quick-link.is-active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.profile-filter-custom {
+    margin-top: 1rem;
+}
+
+.profile-filter-custom summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    list-style: none;
+}
+
+.profile-filter-custom summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-filter-custom summary::before {
+    content: "▸ ";
+    font-size: 0.7rem;
+}
+
+.profile-filter-custom[open] summary::before {
+    content: "▾ ";
+}
+
+.profile-filter-custom summary:hover {
+    color: var(--ink);
+}
+
+.profile-filter-custom .profile-filter-form {
+    margin-top: 0.85rem;
+}
+
+.profile-filter-summary {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+}
+
+.profile-filter-summary strong {
+    color: var(--ink);
+}
+
 .profile-section-title {
     font-family: var(--font-display);
     font-size: 1.25rem;
@@ -738,6 +828,17 @@ a { color: inherit; text-decoration: none; }
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: var(--ink);
+}
+
+.profile-action-link {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.profile-action-link:hover {
+    text-decoration: underline;
 }
 
 .category-badge {
