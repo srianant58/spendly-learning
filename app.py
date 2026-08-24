@@ -41,12 +41,6 @@ def _format_currency(amount):
     return f"₹{amount:,.2f}"
 
 
-def _format_short_date(date_str):
-    """Format a "YYYY-MM-DD" date string as a short display date, e.g. "23 Aug"."""
-    parsed = datetime.strptime(date_str, "%Y-%m-%d")
-    return f"{parsed.day} {parsed.strftime('%b')}"
-
-
 def _format_long_date(date_str):
     """Format a "YYYY-MM-DD" date string as a full display date, e.g. "23 Aug 2026"."""
     parsed = datetime.strptime(date_str, "%Y-%m-%d")
@@ -237,7 +231,7 @@ def profile():
     transactions = [
         {
             "id": row["id"],
-            "date": _format_short_date(row["date"]),
+            "date": _format_long_date(row["date"]),
             "description": row["description"] or "",
             "category": row["category"],
             "amount": _format_currency(row["amount"]),
